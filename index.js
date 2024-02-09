@@ -50,6 +50,7 @@ const ser = server.listen(PORT, (err, res) => {
     mongoose.connect(DATABASE_URL, {useNewUrlParser: true,useUnifiedTopology: true}).then((res) => {
         console.log("DB Connected!");
         require("./app/routers/healthcheck")(router);
+        require("./app/routers/admin/users")(router);
         console.log(`Server is listening on port ${PORT}`);
       })
       .catch((err) => {
