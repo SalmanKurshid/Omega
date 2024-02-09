@@ -1,9 +1,15 @@
+const apiResponseHandler = require('../../utilities/apiResponse')
+
 module.exports = function (router, passport) {
     router.get('/healthcheck', function (req, res, next) {
         try {
-            res.send('Server Working Fine!');
+            apiResponseHandler.sendResponse(200, true, 'Server working fine', function (response) {
+                res.json(response);
+            });
         } catch (err) {
-            console.log("Error in logging in", err);
+            apiResponseHandler.sendError(500, false, err, function(response){
+                res.json(response)
+            })
         }
     });
 }

@@ -1,4 +1,5 @@
 const User = require('../../models/user');
+const apiResponseHandler = require('../../../utilities/apiResponse')
 
 const getAllUsers=async(req,res,next)=>{
     try{
@@ -20,12 +21,18 @@ const createNewUser=async(req,res,next)=>{
                 role: user.role
             }
             let createUser = User.create(createObj)
-            res.send(200)
+            apiResponseHandler.sendResponse(200, true, createUser, function (response) {
+                res.json(response);
+            });
         }else{  
-            res.send(400)
+            apiResponseHandler.sendError(400, false, 'Please Provide Proper Data!', function(response){
+                res.json(response)
+            })
         }
     }catch(error){
-        console.log('Error in creating user');
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
     }
 }
 
