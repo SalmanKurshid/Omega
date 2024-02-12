@@ -15,6 +15,10 @@ const UsersSchema = new Schema({
     name: {
         type: String,
     },
+    is_deleted: {
+        type: Boolean,
+        default: false
+    },
     email: {
         type: String,
     },
