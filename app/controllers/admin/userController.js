@@ -102,6 +102,34 @@ const createNewUser=async(req,res,next)=>{
     }
 }
 
+const loginUser = async(req,res,next)=>{
+    try{
+        let { email,password } = req.body
+        if(email && password){
+            let checkEmailExists=await User.findOne({email:email})
+            console.log('checkEmailExists',checkEmailExists);
+            if(checkEmailExists){
+                bcrypt.compare(password,checkEmailExists.password,async function(res,err){
+                    console.log('response->',res);
+                    console.log('err',err);
+                })
+            }else{
+                apiResponseHandler.sendError(400, false, 'Email Does Not Exist!', function(response){
+                    res.json(response)
+                })
+            }
+        }else{
+            apiResponseHandler.sendError(400, false, 'Email Or Password Missing!', function(response){
+                res.json(response)
+            })
+        }
+    }catch(error){
+        apiResponseHandler.sendError(500, false, error, function(response){
+            res.json(response)
+        })
+    }
+}
+
 function isertUserData(userData) {
     return new Promise(function(resolve, reject) {
         User.create(userData)
@@ -118,5 +146,6 @@ function isertUserData(userData) {
 
 module.exports={
     getAllUsers,
-    createNewUser
+    createNewUser,
+    loginUser
 }
