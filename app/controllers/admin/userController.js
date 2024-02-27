@@ -2,6 +2,8 @@ const User = require('../../models/user');
 const apiResponseHandler = require('../../../utilities/apiResponse')
 const bcrypt = require("bcrypt")
 const saltRounds=10
+const jwt = require('jsonwebtoken');
+const SECRET_KEY=process.env.SECRET_KEY
 
 const getAllUsers=async(req,res,next)=>{
     try{
@@ -109,10 +111,25 @@ const loginUser = async(req,res,next)=>{
             let checkEmailExists=await User.findOne({email:email})
             console.log('checkEmailExists',checkEmailExists);
             if(checkEmailExists){
-                bcrypt.compare(password,checkEmailExists.password,async function(res,err){
-                    console.log('response->',res);
-                    console.log('err',err);
-                })
+                let compare_pass=await bcrypt.compare(password,checkEmailExists.password)
+                if(compare_pass){
+                    const createTokenData = {
+                        id: checkEmailExists._id,
+                        name: checkEmailExists.name,
+                        email: checkEmailExists.email,
+                    }
+                    const token = jwt.sign({ createTokenData }, SECRET_KEY, { algorithm: "HS256", expiresIn: '24h' });
+                    const finalData = {
+                        token: token
+                    }
+                    apiResponseHandler.sendResponse(200, true, finalData, function(response) {
+                        res.json(response);
+                    });
+                }else{
+                    apiResponseHandler.sendError(455, false, 'Password Does Not Match!', function(response){
+                        res.json(response)
+                    })
+                }
             }else{
                 apiResponseHandler.sendError(400, false, 'Email Does Not Exist!', function(response){
                     res.json(response)
