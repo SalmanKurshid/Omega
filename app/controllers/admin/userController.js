@@ -160,9 +160,92 @@ function isertUserData(userData) {
     });
 }
 
+const updateUser=async(req,res,next)=>{
+    try{
+        let {name,role,id}=req.body
+        let findUser=await User.findOne({_id:id})
+        console.log('findUser',findUser);
+        if(findUser){
+            let findBody={
+                _id:id
+            }
+            let updateBody={
+                name: name,
+                role: role
+            }
+            if(findUser.name == updateBody.name && findUser.role == updateBody.role){
+                apiResponseHandler.sendError(304, false, 'Data Not Modified!', function(response){
+                    res.json(response)
+                })
+            }else{
+                let updateUser = await User.findOneAndUpdate(findBody, updateBody, { new: true }).exec()
+                if(updateUser){
+                    updateUser = updateUser.toObject();
+                    delete updateUser._id;
+                    delete updateUser.password;
+                    delete updateUser.is_deleted;
+                    apiResponseHandler.sendResponse(200, true, updateUser, function (response) {
+                        res.json(response);
+                    });
+                }else{
+                    apiResponseHandler.sendError(400, false, 'Please Provide Proper Data!', function(response){
+                        res.json(response)
+                    })
+                }
+            }
+        }else{
+            apiResponseHandler.sendError(456, false, 'User Does Not Exist!', function(response){
+                res.json(response)
+            })
+        }
+    }catch(error){
+        apiResponseHandler.sendError(500, false, error, function(response){
+            res.json(response)
+        })
+    }
+}
+
+const softDeleteUser=async(req,res,next)=>{
+    try{
+        let {id,is_deleted}=req.body
+        let findUser=await User.findOne({_id:id})
+        if(findUser){
+            let findBody={
+                _id:id
+            }
+            let deleteBody={
+                is_deleted:is_deleted
+            }
+            let softDeleteUser=await User.findOneAndUpdate(findBody, deleteBody, { new: true }).exec()
+            if(softDeleteUser){
+                softDeleteUser = softDeleteUser.toObject();
+                delete softDeleteUser._id;
+                delete softDeleteUser.password;
+                apiResponseHandler.sendResponse(200, true, softDeleteUser, function (response) {
+                    res.json(response);
+                });
+            }else{
+                apiResponseHandler.sendError(400, false, 'Please Provide Proper Data!', function(response){
+                    res.json(response)
+                })
+            }
+        }else{
+            apiResponseHandler.sendError(456, false, 'User Does Not Exist!', function(response){
+                res.json(response)
+            })
+        }
+    }catch(error){
+        apiResponseHandler.sendError(500, false, error, function(response){
+            res.json(response)
+        })
+    }
+}
+
 
 module.exports={
     getAllUsers,
     createNewUser,
-    loginUser
+    loginUser,
+    updateUser,
+    softDeleteUser
 }
