@@ -51,6 +51,7 @@ const ser = server.listen(PORT, (err, res) => {
         console.log("DB Connected!");
         require("./app/routers/healthcheck")(router);
         require("./app/routers/admin/users")(router);
+        require("./app/routers/weather")(router);
         console.log(`Server is listening on port ${PORT}`);
       })
       .catch((err) => {
