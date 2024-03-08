@@ -241,11 +241,24 @@ const softDeleteUser=async(req,res,next)=>{
     }
 }
 
+const uploadImage=async(req,res,next)=>{
+    try{
+        apiResponseHandler.sendResponse(200,req.file, "Uploaded successfully!", function (response) {
+            res.json(response);
+        });
+    }catch(err){
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
+    }
+}
+
 
 module.exports={
     getAllUsers,
     createNewUser,
     loginUser,
     updateUser,
-    softDeleteUser
+    softDeleteUser,
+    uploadImage
 }

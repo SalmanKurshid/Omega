@@ -1,5 +1,6 @@
 const usersCtrl = require('./../../controllers/admin/userController')
 const authenticateJWT = require('../../../middleware/authenticatejwt')
+const uploadtos3 = require('./../../../middleware/uploads3')
 
 module.exports = function (router) {
     router.get('/users',authenticateJWT,usersCtrl.getAllUsers);
@@ -7,4 +8,5 @@ module.exports = function (router) {
     router.post('/login',usersCtrl.loginUser);
     router.put('/users',authenticateJWT,usersCtrl.updateUser);
     router.put('/delete-user',authenticateJWT,usersCtrl.softDeleteUser);
+    router.put("/:userId/profile-image",uploadtos3.single("image"),usersCtrl.uploadImage)
 }
