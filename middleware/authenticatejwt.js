@@ -3,7 +3,6 @@ const passport = process.env.SECRET_KEY;
 
 const authenticateJWT = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    console.log('authheader :',authHeader);
     if (authHeader) {
         const authHeaderParts = authHeader.split(' ');
         if (authHeaderParts.length === 2 && authHeaderParts[0] === 'Bearer') {
