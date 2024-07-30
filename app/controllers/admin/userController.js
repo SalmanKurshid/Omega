@@ -1,9 +1,13 @@
 const User = require('../../models/user');
+const User_forgot_password = require('../../models/user_reset_password')
 const apiResponseHandler = require('../../../utilities/apiResponse')
 const bcrypt = require("bcrypt")
+const crypto = require('crypto');
 const saltRounds=10
 const jwt = require('jsonwebtoken');
 const SECRET_KEY=process.env.SECRET_KEY
+const forgot_password_email = require('../../../utilities/forgot_password_mail')
+const mailer= require('../../../utilities/sendMail')
 
 const getAllUsers=async(req,res,next)=>{
     try{
@@ -253,6 +257,112 @@ const uploadImage=async(req,res,next)=>{
     }
 }
 
+const forgotPassword=async(req,res,next)=>{
+    try{
+        let {email,url}=req.body
+        if(email && url){
+            if(email && url){
+                // Checking If User Exists With the email name recieved in the body
+                let userData=await User.findOne({email: email}).exec()
+                if(userData){
+                    let token= await expireToken(res,email,1)
+                    const resetToken = crypto.randomBytes(20).toString('hex');
+                    const resetTokenExpires = Date.now() + 3600000; //Token Expires In 1 Hour
+                    const createdAt = new Date(Date.now());
+                    const expiredAt = resetTokenExpires;
+                    const inserted_at = new Date(Date.now())
+                    let tokenData = {
+                        token_value: resetToken,
+                        email: email,
+                        created_at: createdAt,
+                        expired_at: expiredAt,
+                        inserted_at: inserted_at,
+                        used: 0,
+                    }
+                    //Insert Token Data in DB
+                    var createToken = await User_forgot_password.create(tokenData);
+                    if(createToken){
+                        const sendMail = process.env.USERID;
+                        var mailOptions = {
+                            to: userData.email,
+                            from: sendMail
+                        };
+                        // Sending Email to the user.
+                        var mailBody = forgot_password_email.forgot_password_email(url, resetToken, mailOptions);
+                        mailer.sendMail(mailBody, userData.email, function (error, resMail) {
+                            if (error) {
+                                console.log("error in sending email", error);
+                                apiResponseHandler.sendResponse(400, false, "Id missing!", function (response) {
+                                    res.json(response);
+                                });
+                            } else {
+                                // Sending 200(Success) response in case Email Is Sent Sucesssfully.
+                                console.log("Link Sent Successfully" + userData.email)
+                                apiResponseHandler.sendResponse(200, true, "Email sent Successfully!", function (response) {
+                                    res.json(response);
+                                });
+                            }
+                        })
+                        apiResponseHandler.sendResponse(200, true, 'Email Sent Successfully!', (response) => {
+                            res.json(response)
+                        })
+                    }else{
+                        // Sending 400 response if unable to create data in User_forgot_password(table)
+                        apiResponseHandler.sendError(400, false, "Unable To Insert Data into Database!", function (response) {
+                            res.json(response);
+                        });
+                    }
+                }else{
+                    // Sending 456 Response if User is Not Found
+                    apiResponseHandler.sendError(456, false, "User Does Not Exist!", function (response) {
+                        res.json(response)
+                    })
+                }
+            }else{
+                // Sending 456 Response if Email Is Missing
+                apiResponseHandler.sendError(400, false, "Email Or Url Is Missing!", function (response) {
+                    res.json(response);
+                });
+            }
+        }else{
+            apiResponseHandler.sendError(400, false, 'Email Or Url is Missing!', function(response){
+                res.json(response)
+            })
+        }
+    }catch(err){
+        console.log('Error in Forgot Password',err)
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
+    }
+}
+
+// Function Used To Expire The Tokens(generally unused tokens), from the database.
+function expireToken(res,email,used) {
+    console.log("******** Expire Old Tokens *********");
+    return new Promise(async (resolve, reject) => {
+        try {
+            let data = await User_forgot_password.findOneAndUpdate({email: email,used: "0"},{used: used},{ new: true }).exec()
+            resolve(data)
+        } catch (err_catch) {
+            console.error("Catch Error - expireOldTokens : ", err_catch);
+            apiResponseHandler.sendError(500, false, "Internal Server Error: An unexpected error occurred while processing your request.", function (response) {
+                res.json(response);
+            });
+        }
+    })
+}
+
+const resetPassword=async(req,res,next)=>{
+    try{
+
+    }catch(err){
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
+    }
+}
+
 
 module.exports={
     getAllUsers,
@@ -260,5 +370,7 @@ module.exports={
     loginUser,
     updateUser,
     softDeleteUser,
-    uploadImage
+    uploadImage,
+    forgotPassword,
+    resetPassword
 }

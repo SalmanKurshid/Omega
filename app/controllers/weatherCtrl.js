@@ -6,9 +6,11 @@ const puppeteer = require('puppeteer');
 
 const getWeatherByLocation=async(req,res,next)=>{
     try{
-        let {city}=req.body
+        console.log('body here::',req.query.city);
+        let city=req.query.city
         const apiKey = weather_key;
         const apiUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&APPID=${apiKey}`;
+        console.log('apiUrl',apiUrl);
         const response = await axios.get(apiUrl);
         if(response){
             console.log(`Weather in ${city}: ${response.data.weather[0].description}, Temperature: ${response.data.main.temp}°C`);
@@ -21,6 +23,7 @@ const getWeatherByLocation=async(req,res,next)=>{
             })
         }
     }catch(error){
+        console.log('Error in Weather API:',error)
         apiResponseHandler.sendError(500, false, error, function(response){
             res.json(response)
         })
@@ -56,6 +59,15 @@ const getInstaData=async(req,res,next)=>{
             res.json(response)
         })
         return next();
+    }
+}
+
+const chuckNorris=async(req,res,next)=>{
+    try {
+        const { data } = await axios.get('https://dog.ceo/api/breeds/image/random');
+        res.json({ imageUrl: data.message });
+    } catch (error) {
+        res.status(500).json({ error: 'An error occurred' });
     }
 }
 
@@ -127,5 +139,6 @@ function insertInstaData(userData) {
 
 module.exports={
     getWeatherByLocation,
-    getInstaData
+    getInstaData,
+    chuckNorris
 }
