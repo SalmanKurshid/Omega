@@ -337,6 +337,64 @@ const forgotPassword=async(req,res,next)=>{
     }
 }
 
+const resetPassword=async(req,res,next)=>{
+    try{
+        let { email, resetToken, password } = req.body
+        if(email){
+            // Checking If User Exists(or if token has expired or not) in the User_forgot_password table.
+            let tokenData = await User_forgot_password.findOne({email: email,expired_at: { $gt: Date.now() },used: 0}).exec()
+            // console.log('tokenData::::',tokenData)
+            if(tokenData){
+                    if (tokenData && tokenData && tokenData.token_value === resetToken) {
+                        // Hashing the new password recieved from the user.
+                        let hash=bcrypt.hashSync(password,saltRounds);
+                        // Updating the User Password
+                        let updatePassword = await User.findOneAndUpdate({email: email},{password : hash},{new: true}).exec()
+                        if(updatePassword){
+                            let result = {
+                                message: "Password changed successfully",
+                            }
+                            if (tokenData && tokenData._id) {
+                                // Deleting the token information from Database once the password is changed successfully, so that the token should not be used again
+                                let deleteData= await User_forgot_password.findOneAndDelete({email: tokenData.email,used: 0})
+                                apiResponseHandler.sendResponse(200, result, 'Password Changed Successfully!', function (response) {
+                                    res.json(response)
+                                })
+                            }else{
+                                apiResponseHandler.sendError(304, false, 'Unable To Delete Token Information!', function (response) {
+                                    res.json(response)
+                                })
+                            }
+                        }else{
+                            // Sending 304 Response if failed to update password.
+                            apiResponseHandler.sendError(304, false, 'Unable to reset password!', function (response) {
+                                res.json(response)
+                            })
+                        }
+                    }else{
+                        // Sending 403(Unauthorized) in case the token has expired.
+                        apiResponseHandler.sendError(403, false, "Unauthorised User!", function (response) {
+                            res.json(response)
+                        })
+                    }
+            }else{
+                apiResponseHandler.sendError(403, false, "Your Token Has Expired. Please Generate A New One!!", function (response) {
+                    res.json(response)
+                })
+            }
+        }else{
+            // Sending 400 If Email Is Missing
+            apiResponseHandler.sendError(400, false, "Email Is Missing!", function (response) {
+                res.json(response);
+            });
+        }
+    }catch(err){
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
+    }
+}
+
 // Function Used To Expire The Tokens(generally unused tokens), from the database.
 function expireToken(res,email,used) {
     console.log("******** Expire Old Tokens *********");
@@ -352,17 +410,6 @@ function expireToken(res,email,used) {
         }
     })
 }
-
-const resetPassword=async(req,res,next)=>{
-    try{
-
-    }catch(err){
-        apiResponseHandler.sendError(500, false, err, function(response){
-            res.json(response)
-        })
-    }
-}
-
 
 module.exports={
     getAllUsers,

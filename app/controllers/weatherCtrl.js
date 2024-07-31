@@ -104,7 +104,6 @@ async function scrapeInstagram(username, password, instagram_profile_link) {
     }
 }
 
-
 async function autoScroll(page) {
     await page.evaluate(async () => {
         await new Promise((resolve, reject) => {
