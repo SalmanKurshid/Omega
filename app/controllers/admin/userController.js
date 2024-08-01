@@ -108,6 +108,36 @@ const createNewUser=async(req,res,next)=>{
     }
 }
 
+const getUserById=async(req,res,next)=>{
+    try{
+        if (req && req.query && req.query.id) {
+            let id = req.query.id
+            let findDataById =await User.findOne({_id:id})
+            if (findDataById) {
+                // Sending 200 Response in case the user details are fetched successfully.
+                apiResponseHandler.sendResponse(200, true, findDataById, function (response) {
+                    res.json(response);
+                });
+            } else {
+                // Sending 401 Response Code in case the user is unauthorised
+                apiResponseHandler.sendError(401, false, 'You Need SuperAdmin Access to view this information!', (response) => {
+                    res.json(response);
+                });
+            }
+        } else {
+            // Seding 400 Response Code in case ID is missing
+            apiResponseHandler.sendError(400, false, "Please Provide An Id", function (response) {
+                res.json(response)
+            })
+        }
+    }catch(err){
+        console.log('error in getting user by id',err)
+        apiResponseHandler.sendError(500, false, err, function(response){
+            res.json(response)
+        })
+    }
+}
+
 const loginUser = async(req,res,next)=>{
     try{
         let { email,password } = req.body
@@ -419,5 +449,6 @@ module.exports={
     softDeleteUser,
     uploadImage,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    getUserById
 }

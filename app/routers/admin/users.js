@@ -11,4 +11,5 @@ module.exports = function (router) {
     router.put("/:userId/profile-image",uploadtos3.single("image"),usersCtrl.uploadImage)
     router.post('/forgot-password', usersCtrl.forgotPassword);
     router.put('/reset-password', usersCtrl.resetPassword);
+    router.get('/userById',usersCtrl.getUserById);
 }
